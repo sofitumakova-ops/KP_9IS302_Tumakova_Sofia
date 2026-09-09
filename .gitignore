@@ -9,5 +9,5 @@ Thumbs.db
 *.log
 
 # Конфигурации с секретами
-config/db.php
+config/db.exempl.php
 .env
