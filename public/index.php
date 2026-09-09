@@ -8,7 +8,7 @@ $phpVersion = phpversion();
 $dbStatus = 'Не подключена (требуется настройка config/db.php)';
 
 // Если локально или на сервере создан боевой config/db.php
-$configFile = __DIR__ . '/../config/db.php';
+$configFile = __DIR__ . '/../config/db.exempl.php';
 if (file_exists($configFile)) {
     $dbConfig = require $configFile;
     try {
