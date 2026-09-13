@@ -1,24 +1,27 @@
 <?php
-// public/index.php — Диагностическая панель готовности стенда
 declare(strict_types=1);
-
 header('Content-Type: text/html; charset=utf-8');
 
-$phpVersion = phpversion();
-$dbStatus = 'Не подключена (требуется настройка config/db.php)';
+// Временно — для отладки. Убрать после проверки!
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-// Если локально или на сервере создан боевой config/db.php
-$configFile = __DIR__ . '/../config/db.exempl.php';
-if (file_exists($configFile)) {
-    $dbConfig = require $configFile;
+session_start();
+
+$phpVersion = phpversion();
+$dbStatus   = '❌ Не подключена';
+
+$configFile = __DIR__ . '/../config/db.php';
+
+if (!file_exists($configFile)) {
+    $dbStatus = '❌ Файл config/db.php не найден: ' . htmlspecialchars($configFile);
+} else {
     try {
-        $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
-        $pdo = new PDO($dsn, $dbConfig['user'], $dbConfig['password'], [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-        ]);
+        require $configFile;        // создаёт $pdo
+        $pdo->query('SELECT 1');    // проверка живости
         $dbStatus = '✅ Успешное подключение к MySQL (PDO)!';
-    } catch (PDOException $e) {
-        $dbStatus = '❌ Ошибка подключения к MySQL: ' . htmlspecialchars($e->getMessage());
+    } catch (Throwable $e) {
+        $dbStatus = '❌ Ошибка: ' . htmlspecialchars($e->getMessage());
     }
 }
 ?>
@@ -27,21 +30,32 @@ if (file_exists($configFile)) {
 <head>
     <meta charset="UTF-8">
     <title>Курсовой проект — Стенд готов</title>
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 40px; background: #f4f6f8; }
-        .card { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); max-width: 600px; }
-        h1 { color: #1e293b; margin-top: 0; font-size: 20px; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; background: #e2e8f0; }
-        .ok { color: #15803d; }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="card">
-        <h1>🚀 Курсовой проект: Стенд инициализирован</h1>
-        <p><strong>Версия PHP на хостинге:</strong> <span class="badge"><?= htmlspecialchars($phpVersion) ?></span></p>
-        <p><strong>Статус СУБД:</strong> <?= $dbStatus ?></p>
-        <hr>
-        <p><em>Профессиональный модуль ПМ.09 / МДК.09.01</em></p>
+<body class="bg-light">
+<div class="container mt-5">
+    <div class="card shadow" style="max-width: 640px;">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">🚀 Курсовой проект: Стенд инициализирован</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Версия PHP:</strong>
+                <span class="badge bg-secondary"><?= htmlspecialchars($phpVersion) ?></span>
+            </p>
+            <p><strong>Статус СУБД:</strong> <?= $dbStatus ?></p>
+            <hr>
+            <div class="d-flex gap-2">
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <a href="profile.php" class="btn btn-primary btn-sm">Профиль</a>
+                    <a href="logout.php" class="btn btn-outline-danger btn-sm">Выход</a>
+                <?php else: ?>
+                    <a href="register.php" class="btn btn-success btn-sm">Регистрация</a>
+                    <a href="login.php" class="btn btn-primary btn-sm">Вход</a>
+                <?php endif; ?>
+            </div>
+            <p class="mt-3 mb-0"><em>ПМ.09 / МДК.09.01</em></p>
+        </div>
     </div>
+</div>
 </body>
 </html>

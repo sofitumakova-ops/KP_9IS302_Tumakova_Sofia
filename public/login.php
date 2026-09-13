@@ -1,8 +1,10 @@
 <?php
-// 1. Старт сессии — ВСЕГДА на первой строке
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 
-// Если пользователь уже авторизован, отправляем в профиль
+// Уже авторизован — сразу в профиль
 if (isset($_SESSION['user_id'])) {
     header("Location: profile.php");
     exit;
@@ -12,26 +14,20 @@ require __DIR__ . '/../config/db.php';
 
 $errorMsg = '';
 
-// 2. Обработка отправки формы
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email']);
-    $pass = $_POST['password'];
+    $email = trim($_POST['email'] ?? '');
+    $pass  = $_POST['password'] ?? '';
 
     if (empty($email) || empty($pass)) {
         $errorMsg = "Заполните все поля!";
     } else {
-        // Поиск пользователя по email
         $stmt = $pdo->prepare("SELECT id, password_hash, role FROM users WHERE email = ?");
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
-        // Сверка пароля с хешем
         if ($user && password_verify($pass, $user['password_hash'])) {
-            // Успех: сохраняем данные в сессию
             $_SESSION['user_id'] = $user['id'];
-            $_SESSION['role'] = $user['role'];
-
-            // Перенаправление в закрытый раздел
+            $_SESSION['role']    = $user['role'];
             header("Location: profile.php");
             exit;
         } else {
