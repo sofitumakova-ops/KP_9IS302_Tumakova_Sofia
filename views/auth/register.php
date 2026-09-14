@@ -1,41 +1,4 @@
-<?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
-require __DIR__ . '/../config/db.php';
-
-$errorMsg   = '';
-$successMsg = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email       = trim($_POST['email'] ?? '');
-    $pass        = $_POST['password'] ?? '';
-    $passConfirm = $_POST['password_confirm'] ?? '';
-
-    if (empty($email) || empty($pass)) {
-        $errorMsg = "Заполните все поля!";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errorMsg = "Некорректный формат Email!";
-    } elseif ($pass !== $passConfirm) {
-        $errorMsg = "Пароли не совпадают!";
-    } else {
-        $hash = password_hash($pass, PASSWORD_DEFAULT);
-        $sql  = "INSERT INTO users (email, password_hash, role) VALUES (:email, :hash, 'client')";
-        $stmt = $pdo->prepare($sql);
-
-        try {
-            $stmt->execute([':email' => $email, ':hash' => $hash]);
-            $successMsg = "Регистрация успешна! <a href='login.php'>Войти</a>";
-        } catch (PDOException $e) {
-            if ($e->getCode() == 23000) {
-                $errorMsg = "Такой email уже зарегистрирован.";
-            } else {
-                $errorMsg = "Ошибка БД: " . htmlspecialchars($e->getMessage());
-            }
-        }
-    }
-}
-?>
+<!-- views/auth/register.php -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -52,13 +15,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h4 class="mb-0">Регистрация</h4>
                 </div>
                 <div class="card-body">
-                    <?php if ($errorMsg): ?>
-                        <div class="alert alert-danger"><?= $errorMsg ?></div>
+                    <?php if (!empty($errorMsg)): ?>
+                        <div class="alert alert-danger"><?= htmlspecialchars($errorMsg) ?></div>
                     <?php endif; ?>
-                    <?php if ($successMsg): ?>
+
+                    <?php if (!empty($successMsg)): ?>
                         <div class="alert alert-success"><?= $successMsg ?></div>
                     <?php else: ?>
-                        <form method="POST" action="register.php">
+                        <form method="POST" action="/register">
                             <div class="mb-3">
                                 <label class="form-label">Email адрес</label>
                                 <input type="email" name="email" class="form-control" required>
@@ -74,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
                         </form>
                         <div class="mt-3 text-center">
-                            <a href="login.php">Уже есть аккаунт? Войти</a>
+                            <a href="/login">Уже есть аккаунт? Войти</a>
                         </div>
                     <?php endif; ?>
                 </div>
